@@ -1,31 +1,32 @@
+# DevOps Lab 9 – Build using Jenkins
 
-# FastAPI Dockerization & CI using GitHub Actions
+**Name:** Vanshika Agarwal
+**SAP ID:** 500108686
+**Roll Number:** R2142221088  
+**Program:** B.Tech CSE (Full Stack AI) – Honours  
+**College:** UPES Dehradun  
+**Lab Title:** Jenkins-based CI/CD for Dockerized FastAPI Application  
 
-Created by **Vanshika Agarwal**  
-This guide explains how to containerize a FastAPI application and automate Docker image building and pushing using GitHub Actions.
-
----
-
-## Step 1: Install Podman (Docker Alternative)
-
-**Podman** is a container engine that can serve as a replacement for Docker.
-
-### Installation
-
-1. Download `podman-cli` from [https://podman.io](https://podman.io/)
-2. Initialize Podman machine and configure alias:
-   ```bash
-   podman machine init
-   podman machine start
-   alias docker=podman
-   docker --version
-   ```
 
 ---
 
-## Step 2: FastAPI Server Code
+## Objective
 
-**File:** `main.py`
+To automate the CI/CD process using Jenkins for a Python FastAPI application by building a Docker image and pushing it to Docker Hub upon each code push or manual trigger.
+
+---
+
+## Tools & Technologies Used
+
+- Jenkins (Self-hosted CI/CD server)
+- Docker (Container platform)
+- Docker Hub (Image registry)
+- FastAPI (Python web framework)
+- Git (Version control)
+
+---
+
+## FastAPI App Code (`main.py`)
 
 ```python
 from fastapi import FastAPI
@@ -47,22 +48,9 @@ if __name__ == "__main__":
 
 ---
 
-## Step 3: Requirements
+## Dockerfile
 
-**File:** `requirements.txt`
-
-```
-fastapi
-uvicorn
-```
-
----
-
-## Step 4: Dockerfile
-
-**File:** `Dockerfile`
-
-```Dockerfile
+```dockerfile
 FROM ubuntu
 
 RUN apt update -y && apt install -y python3 python3-pip pipenv
@@ -77,65 +65,70 @@ CMD pipenv run python3 ./main.py
 
 ---
 
-## Step 5: Build and Run
+## Jenkins Configuration Steps
 
-### Build Image
-```bash
-docker build -t fastapi-vanshika:v1 .
-```
+### 1. Create a Pipeline Job
 
-### List Images
-```bash
-docker images
-```
+- Go to Jenkins Dashboard → New Item → Select **Pipeline** → Name: `FastAPI Docker Pipeline`
 
-### Run Container
-```bash
-docker run fastapi-vanshika:v1
-```
+### 2. Configure DockerHub Credentials
 
----
+- Go to Jenkins → **Manage Jenkins** → **Credentials**
+- Add new credentials:
+  - Type: Username with password
+  - ID: `dockerhub-creds`
+  - Username: Your Docker Hub username
+  - Password: Docker Hub access token
 
-## Step 6: GitHub Actions Workflow
+### 3. Jenkinsfile (Pipeline Script)
 
-**File:** `.github/workflows/DockerBuild.yml`
+```groovy
+pipeline {
+    agent any
 
-```yaml
-name: Docker image build
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
+    }
 
-on: push
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-username/your-repo.git'
+            }
+        }
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+        stage('Docker Login') {
+            steps {
+                sh "echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin"
+            }
+        }
 
-    steps:
-      - uses: actions/checkout@v1
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t yourdockerhubusername/fast_api_dockerize .'
+            }
+        }
 
-      - name: Build & Push Image
-        run: |
-          echo ${{ secrets.DOCKERTOKEN }} | docker login -u "vanshikaagarwal" --password-stdin
-          docker build -t vanshikaagarwal/fastapi-docker:v0.1 .
-          docker push vanshikaagarwal/fastapi-docker:v0.1
-```
-
----
-
-## Docker Token Setup
-
-### Docker Hub Token
-
-1. Visit [Docker Hub](https://hub.docker.com)
-2. Go to **Account Settings > Security > Access Tokens**
-3. Generate a token, give it a name, set permissions
-4. Copy and store it securely (you’ll use this in GitHub Secrets)
-
-Use the token to log in:
-```bash
-echo "<your-token>" | docker login -u <your-username> --password-stdin
+        stage('Push Docker Image') {
+            steps {
+                sh 'docker push yourdockerhubusername/fast_api_dockerize'
+            }
+        }
+    }
+}
 ```
 
 ---
 
+## Output / Result
 
+- Jenkins checks out the source code from GitHub.
+- Logs into Docker Hub using saved credentials.
+- Builds the Docker image.
+- Pushes the image to Docker Hub.
 
+---
+
+## Conclusion
+
+This lab demonstrates how Jenkins can be used to set up a CI/CD pipeline for Dockerized applications. By using Jenkins with Docker, we automate the build and deployment workflow of a FastAPI application in a reproducible manner.
