@@ -1,4 +1,4 @@
-# DevOps Lab 9 – Build using Jenkins
+# DevOps Lab 8 – Build using Jenkins
 
 **Name:** Vanshika Agarwal
 **SAP ID:** 500108686
